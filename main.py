@@ -1,9 +1,8 @@
-from src.utility import read_mat
-
+from src.utility import load_cuave, load_avletter, visualize_frame
+from src import tree_classifier
 
 def main():
-    read_mat(verbose=True)
-
+    pass
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,22 @@
+{
+    "data": {
+        "cuave": "./dataset/cuave-group-aligned",
+        "avletter": {
+            "name": ["Anya", "Bill", "Faye", "John", "Kate", "Nicola", "Stephen", "Steve", "Verity", "Yi"],
+            "vocal": "./dataset/processed/avletters/mfccs",
+            "visual": "./dataset/avletters/Lips"
+        },
+        "processed": {
+            "cuave": "./dataset/processed/cuave",
+            "avletter": "./dataset/processed/avletters"
+        },
+        "visualized": {
+            "cuave_1": "./dataset/processed/cuave/frames_1.npy",
+            "cuave_2": "./dataset/processed/cuave/frames_2.npy",
+            "avletter": "./dataset/processed/avletters/frames.npy"
+        }
+    },
+    "model": {
+
+    }
+}
