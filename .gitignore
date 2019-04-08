@@ -109,4 +109,5 @@ venv.bak/
 .idea
 /dataset/*
 !/dataset/mfcc.m
+models
 

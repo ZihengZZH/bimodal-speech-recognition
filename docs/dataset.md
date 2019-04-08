@@ -13,12 +13,12 @@ Every individual sequence contains a 2 element cell array containing grayscale v
 
 The elements contained in each ```g_aligned.mat``` are listed as follows.
 * **video** { [75\*50\*n] [75\*50\*n] }
-* audioIndexed
+* **audioIndexed** {[534\*n]}
 * **mfccs** { [13*n] }
 * **labels** { [1*n] }
 * frameNumbers
 * fps
-* fs
+* fs [16000]
 * flowX
 * flowY
 * flowStats
@@ -29,6 +29,12 @@ The video frames can be visualized via ```visualize_frame()``` in ```utility.py`
 |-| --  | --  | --  | --  |
 |1| ![](../images/cuave_1_frame_1.png) | ![](../images/cuave_1_frame_2.png) | ![](../images/cuave_1_frame_3.png) | ![](../images/cuave_1_frame_4.png) |
 |2| ![](../images/cuave_2_frame_1.png) | ![](../images/cuave_2_frame_2.png) | ![](../images/cuave_2_frame_3.png) | ![](../images/cuave_2_frame_4.png)
+
+## spectrogram
+
+A spectrogram is a visual representation of the spectrum of frequencies of a signal as it varies with time. A common format is a graph with two geometric dimensions: one axis represents time, the other axis is frequency; a third dimension indicating the amplitude of a particular frequency at a particular time is represented by the intensity or color of each point in the image.
+
+![](../images/cuave_spectrogram.png)
 
 
 ## [AV Letters](http://www.ee.surrey.ac.uk/Projects/LILiR/datasets/avletters1/index.html)

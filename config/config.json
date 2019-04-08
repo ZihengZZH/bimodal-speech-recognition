@@ -11,14 +11,21 @@
             "avletter": "./dataset/processed/avletters"
         },
         "visualized": {
-            "cuave_1": "./dataset/processed/cuave/frames_1.npy",
-            "cuave_2": "./dataset/processed/cuave/frames_2.npy",
-            "avletter": "./dataset/processed/avletters/frames.npy"
+            "frames": {
+                "cuave_1": "./dataset/processed/cuave/frames_1.npy",
+                "cuave_2": "./dataset/processed/cuave/frames_2.npy",
+                "avletter": "./dataset/processed/avletters/frames.npy"
+            },
+            "spectrogram": {
+                "cuave": "./dataset/processed/cuave/spectrogram.npy"
+            }
+            
         }
     },
     "model": {
-        "hidden": 100,
-        "epochs": 100,
-        "plot": 0
+        "hidden_dim": 250,
+        "batch_size": 128,
+        "epochs": 50,
+        "save_dir": "./models"
     }
 }
