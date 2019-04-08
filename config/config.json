@@ -17,6 +17,8 @@
         }
     },
     "model": {
-
+        "hidden": 100,
+        "epochs": 100,
+        "plot": 0
     }
 }

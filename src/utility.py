@@ -26,19 +26,16 @@ def load_cuave(verbose=False):
             each = loadmat(os.path.join(data_config['data']['cuave'], filename))
             # load the label
             label.extend(each['labels'][0])
-            # load vocal feature (mfcc)
+            # load vocal features (mfcc)
             each_mfcc = each['mfccs']
             for i in range(len(each_mfcc[0])):
-                assert len(each_mfcc[:,i]) == 13
                 mfcc.append(each_mfcc[:,i])
-            # load visual feature
+            # load visual features
             each_frame_1 = each['video'][0][0]
             each_frame_2 = each['video'][0][1]
-            assert len(each_frame_1[0][0]) == len(each_frame_2[0][0])
             for i in range(len(each_frame_1[0][0])):
                 frame_1.append(each_frame_1[:,:,i])
                 frame_2.append(each_frame_2[:,:,i])
-
             print(filename, "read")
 
         if verbose:
@@ -75,11 +72,11 @@ def load_avletter(verbose=False):
                 (h, w, no_frame) = temp_frame['siz'][0]
                 for j in range(int(no_frame)):
                     frame.append(np.reshape(temp_vid[:,j], (int(h), int(w))))
-                    label.append(i)
-                print(temp_mfcc.shape, no_frame)
+                    label.append(i) # ASCII value for label
+                # print(temp_mfcc.shape, no_frame)
 
     if verbose:
-        print(frame[:20])
+        print(mfcc[:20])
 
     # np.savetxt(os.path.join(processed, 'mfccs.csv'), mfcc)
     # np.save(os.path.join(processed, 'frames'), frame)

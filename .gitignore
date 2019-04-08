@@ -105,6 +105,8 @@ venv.bak/
 
 
 # project specific
-/dataset
 .vscode
 .idea
+/dataset/*
+!/dataset/mfcc.m
+
