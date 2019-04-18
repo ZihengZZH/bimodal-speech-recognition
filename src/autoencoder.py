@@ -11,7 +11,42 @@ from src.utility import load_cuave
 
 
 class Autoencoder(object):
+    """
+    The base autoencoder implementation
+    ---
+    Attributes
+    -----------
+    _dataset_name: str [private]
+        a string indicating the dataset to use
+    _modality_name: str [private]
+        a string indicating the modality to use
+    X_train/X_test: np.array
+        a numpy array storing the training/test data (#num x dim)
+    y_label: np.array
+        a numpy array storing the label (#num x 1)
+    encoder/decoder: keras.models.Model()
+        the encoder/decoder part of the entire model
+    autoencoder: keras.models.Model()
+        the entire autoencoder model
+    w/h: int
+        width/height for input data (if applicable)
+    input_dim: int
+        dimensionality of input data (w x h)
+    hidden_dim: int
+        dimensionality of hidden layer (load config)
+    batch_size: int
+        batch size during training (load config)
+    epochs: int
+        epochs during training (load config)
+    save_dir
+        directory for model saving (load config)
+    """
+
     def __init__(self, dataset_name, modality_name):
+        """
+        # para dataset_name: which dataset to use 
+        # para modality_name: which modality to use
+        """
         self._dataset_name = dataset_name
         self._modality_name = modality_name
         self.X_train = None
@@ -29,15 +64,22 @@ class Autoencoder(object):
         self._prepare_data()
         self.input_dim = self.w * self.h
 
-    # flatten images to 1D array
     def _flatten(self, X, image=True):
+        """flatten images to 1D array [private]
+        # para X: entire training/test set (#num x dim(75*50))
         # para image: whether image or not
+        return X: flattened training/test set
+        """
         if image:
             X = X.astype('float32') / 255.
+        else:
+            X = np.array([x.reshape(self.w*self.h, 1) for x in X])
         X = X.reshape((len(X), np.prod(X.shape[1:])))
         return X
 
     def _prepare_toy_data(self):
+        """prepare some toy data (MNIST) for test of model [private]
+        """
         from keras.datasets import mnist
         (X_train, _), (X_test, _) = mnist.load_data()
         self.w, self.h = X_train[0].shape
@@ -45,6 +87,9 @@ class Autoencoder(object):
         self.X_test = self._flatten(X_test)
     
     def _prepare_data(self):
+        """prepare data for the model [private]
+        X_train/X_test should be modified individually based on modality
+        """
         if self._dataset_name == 'cuave':
             mfccs, audio, spec, frames_1, _, labels = load_cuave()
             if self._modality_name == 'mfcc':
@@ -52,7 +97,11 @@ class Autoencoder(object):
             elif self._modality_name == 'audio':
                 self.X_train, self.X_test, _, _ = train_test_split(audio, labels, test_size=0.25)
             elif self._modality_name == 'spectrogram':
-                self.X_train, self.X_test, _, _ = train_test_split(spec, labels, test_size=0.25)
+                Sxx = np.array(spec)[:,2]
+                self.X_train, self.X_test, _, _ = train_test_split(Sxx, labels, test_size=0.25)
+                self.w, self.h = self.X_train[0].shape
+                # flatten spectrograms to 1D array
+                self.X_train, self.X_test = self._flatten(self.X_train, image=False), self._flatten(self.X_test, image=False)
             elif self._modality_name == 'frame':
                 self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
                 self.w, self.h = self.X_train[0].shape
@@ -62,8 +111,14 @@ class Autoencoder(object):
         elif self._dataset_name == 'avletter':
             self.X_train = None
             self.y_label = None
+        
+        print("Training data dimensionality", self.X_train.shape)
+        print("Test data dimensionality", self.X_test.shape)
+        print("data preparation done")
 
     def build_model(self):
+        """build (deep) autoencoder model
+        """
         # an input placeholder
         input_data = Input(shape=(self.input_dim,))
 
@@ -92,8 +147,11 @@ class Autoencoder(object):
         
         # configure the model
         self.autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
+        print(self.autoencoder.summary())
     
     def train_model(self):
+        """train (deep) autoencoder model and save to external file
+        """
         self.autoencoder.fit(self.X_train, self.X_train,
                             epochs=self.epochs,
                             batch_size=self.batch_size,
@@ -102,10 +160,14 @@ class Autoencoder(object):
         self._save_model()
 
     def _save_model(self):
-        save_name = os.path.join(self.save_dir, '%s-e%s.h5' % (datetime.datetime.now().strftime('%d%m%Y-%H%M%S'), str(self.epochs)))
+        """save (deep) autoencoder model to (indicated) external file [private]
+        """
+        save_name = os.path.join(self.save_dir, '%s-%s-%d-%s.h5' % (self._dataset_name, self._modality_name, self.hidden_dim, datetime.datetime.now().strftime('%d%m%Y-%H%M%S')))
         self.autoencoder.save_weights(save_name)
     
     def load_model(self):
+        """load (deep) autoencoder model from external files
+        """
         weights_list = [f for f in os.listdir(self.save_dir) if os.path.isfile(os.path.join(self.save_dir, f))]
         print(weights_list)
         print("Here are the weights of pre-trained models")
@@ -122,10 +184,13 @@ class Autoencoder(object):
                 print("Wrong input! Please start over")
 
     def vis_model(self):
-        encoded_repres = self.encoder.predict(self.X_test)
-        decoded_repres = self.decoder.predict(encoded_repres)
-        n = 10
+        """visualize original/reconstructed data along with encoded representation
+        """
+        encoded_repres = self.encoder.predict(self.X_test)      # inference
+        decoded_repres = self.decoder.predict(encoded_repres)   # inference
+        n = 10 # number to visualize
         plt.figure(figsize=(30, 8))
+        
         for i in range(n):
             ax = plt.subplot(3, n, i+1)
             plt.imshow(self.X_test[i].reshape(self.w, self.h))
@@ -134,7 +199,7 @@ class Autoencoder(object):
             ax.get_yaxis().set_visible(False)
 
             ax = plt.subplot(3, n, i+1+n)
-            plt.imshow(encoded_repres[i].reshape(25, 10))
+            plt.imshow(encoded_repres[i].reshape(5, 4))
             plt.gray()
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)

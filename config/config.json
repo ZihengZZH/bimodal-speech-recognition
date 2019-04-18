@@ -23,9 +23,9 @@
         }
     },
     "model": {
-        "hidden_dim": 250,
+        "hidden_dim": 20,
         "batch_size": 128,
-        "epochs": 50,
+        "epochs": 100,
         "save_dir": "./models"
     }
 }

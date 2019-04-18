@@ -7,5 +7,10 @@ bimodal speech recognition:
     ✔ get spectrogram feature for audio @done(19-04-08 17:55)
     ☐ build the pipeline
         ☐ build the RBM
-        ☐ build the AE for single modality
-    ☐ upload preprocessed data
+        ✔ build the AE for single modality @done(19-04-18 17:32)
+    ☐ upload preprocessed data (5 contiguous frames)
+    ☐ re-implement experiment
+        ☐ multimodal fusion
+        ☐ cross-modality learning
+        ☐ shared representation learning
+    ☐ temporal derivates

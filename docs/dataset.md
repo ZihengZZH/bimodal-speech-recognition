@@ -32,7 +32,7 @@ The video frames can be visualized via ```visualize_frame()``` in ```utility.py`
 
 ## spectrogram
 
-A spectrogram is a visual representation of the spectrum of frequencies of a signal as it varies with time. A common format is a graph with two geometric dimensions: one axis represents time, the other axis is frequency; a third dimension indicating the amplitude of a particular frequency at a particular time is represented by the intensity or color of each point in the image.
+A spectrogram is a visual representation of the spectrum of frequencies of a signal as it varies with time. A common format is a graph with two geometric dimensions: one axis represents time, the other axis is frequency; a third dimension indicating the amplitude of a particular frequency at a particular time is represented by the intensity or color of each point in the image. The dimension for spectrogram in CUAVE is 129x2. 
 
 ![](../images/cuave_spectrogram.png)
 
@@ -50,7 +50,7 @@ The frame file ```F2_Bill-lips.mat``` is a dictionary, which has two key-value p
 Some examples of the lip regions are visualized as below.
 | 1st | 2nd | 3rd | 4th |
 | --  | --  | --  | --  |
-| ![](../images/avletter_frame_1.png) | ![](../images/avletter_frame_2.png) | ![](../images/avletter_frame_3.png) | ![](../images/avletter_frame_4.png)
+| ![](../images/avletter_frame_1.png) | ![](../images/avletter_frame_2.png) | ![](../images/avletter_frame_3.png) | ![](../images/avletter_frame_4.png) |
 
 ## tree-structure
 
