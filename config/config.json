@@ -22,10 +22,18 @@
             
         }
     },
-    "model": {
+    "autoencoder": {
+        "input_dim": 20,
         "hidden_dim": 20,
         "batch_size": 128,
         "epochs": 100,
+        "save_dir": "./models"
+    },
+    "boltzmann": {
+        "visible_dim": 784,
+        "hidden_dim": 64,
+        "batch_size": 10,
+        "epochs": 40,
         "save_dir": "./models"
     }
 }

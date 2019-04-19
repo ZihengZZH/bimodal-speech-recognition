@@ -5,7 +5,7 @@ from tensorflow.contrib.tensor_forest.python import tensor_forest
 
 from src.utility import load_cuave
 
-mfccs, frames_1, frames_2, labels = load_cuave()
+mfccs, audio, specs, frames_1, frames_2, labels = load_cuave()
 X_train, X_test, y_train, y_test = train_test_split(mfccs, labels, test_size=0.25, random_state=0)
 
 num_steps = 100

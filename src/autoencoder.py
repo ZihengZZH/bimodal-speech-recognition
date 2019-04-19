@@ -57,10 +57,10 @@ class Autoencoder(object):
         self.autoencoder = None
         self.w, self.h = 0, 0
         self.config = json.load(open('./config/config.json', 'r'))
-        self.hidden_dim = self.config['model']['hidden_dim']
-        self.batch_size = self.config['model']['batch_size']
-        self.epochs = self.config['model']['epochs']
-        self.save_dir = self.config['model']['save_dir']
+        self.hidden_dim = self.config['autoencoder']['hidden_dim']
+        self.batch_size = self.config['autoencoder']['batch_size']
+        self.epochs = self.config['autoencoder']['epochs']
+        self.save_dir = self.config['autoencoder']['save_dir']
         self._prepare_data()
         self.input_dim = self.w * self.h
 

@@ -1,14 +1,7 @@
-from src.utility import load_cuave, load_avletter, visualize_frame, visualize_spectrogram
-from src.autoencoder import Autoencoder
+from src.detector import crop_mouth_region_cv2, crop_mouth_region_dlib
 
 def main():
-    load_avletter()
-    # visualize_frame('cuave_2')
-    # visualize_spectrogram('cuave', write=True)
-    # ae = Autoencoder('cuave','spectrogram')
-    # ae.build_model()
-    # ae.load_model()
-    # ae.vis_model()
+    crop_mouth_region_dlib()
 
 if __name__ == "__main__":
     main()

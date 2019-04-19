@@ -50,7 +50,7 @@ def load_cuave(verbose=False):
                 frame_1_temp.append(each_frame_1[:,:,i])
                 frame_2_temp.append(each_frame_2[:,:,i])
 
-                if every_five == 5:
+                if every_five == 4:
                     # push features at a freq of five
                     mfcc.append(mfcc_temp)
                     audio.append(audio_temp)
@@ -73,7 +73,7 @@ def load_cuave(verbose=False):
             print(frame_2[:10])
 
         # 5 contiguous frames to use as input
-        label = np.array(label).reshape(int(len(label)/5), 5)
+        label = np.array(label[:-3]).reshape(int(len(label)/4), 4)
 
         drop_row_idx = []
         for k in range(label.shape[0]):
@@ -233,3 +233,19 @@ def visualize_spectrogram(dataset, write=False):
         fig.savefig('./images/%s_spectrogram.png' % dataset)
     else:
         plt.show()
+
+
+def visualize_reconstruction(origin, recon, size):
+    fig = plt.figure(figsize=(15, 15))
+
+    plt.subplot(121)
+    plt.title('original')
+    plt.axis('off')
+    plt.imshow(origin.reshape((size, size)), cmap=plt.cm.gray)
+
+    plt.subplot(122)
+    plt.title('reconstruction')
+    plt.axis('off')
+    plt.imshow(recon.reshape((size, size)), cmap=plt.cm.gray)
+
+    plt.show()

@@ -110,4 +110,5 @@ venv.bak/
 /dataset/*
 !/dataset/mfcc.m
 models
+MNIST_data
 
