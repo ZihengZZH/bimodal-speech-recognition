@@ -15,6 +15,7 @@ data_config = json.load(open('./config/config.json', 'r'))
 def load_cuave(verbose=False):
     # para verbose: whether or not to print more 
     processed_dir = data_config['data']['processed']['cuave']
+
     if len(os.listdir(processed_dir)) == 6:
         print("processed data exist\nstart loading processed data")
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
@@ -26,6 +27,8 @@ def load_cuave(verbose=False):
 
     else:
         mfcc, audio, spec, frame_1, frame_2, label = [], [], [], [], [], []
+        mfcc_temp, audio_temp, spec_temp, frame_1_temp, frame_2_temp = [], [], [], [], []
+        every_five = 1
         for index in range(1, 23):
             filename = "g%s_aligned.mat" % str(index).zfill(2)
             each = loadmat(os.path.join(data_config['data']['cuave'], filename))
@@ -38,14 +41,27 @@ def load_cuave(verbose=False):
             each_frame_2 = each['video'][0][1]
             for i in range(len(each['labels'][0])):
                 # load vocal features (mfcc)
-                mfcc.append(each_mfcc[:,i])
+                mfcc_temp.append(each_mfcc[:,i])
                 # load vocal modality data (along with spectrogram)
-                audio.append(each_audio[:,i])
+                audio_temp.append(each_audio[:,i])
                 f, t, Sxx = spectrogram(each_audio[:,i], fs=fs)
-                spec.append((f, t, Sxx))
+                spec_temp.append((f, t, Sxx))
                 # load visual modality data
-                frame_1.append(each_frame_1[:,:,i])
-                frame_2.append(each_frame_2[:,:,i])
+                frame_1_temp.append(each_frame_1[:,:,i])
+                frame_2_temp.append(each_frame_2[:,:,i])
+
+                if every_five == 5:
+                    # push features at a freq of five
+                    mfcc.append(mfcc_temp)
+                    audio.append(audio_temp)
+                    spec.append(spec_temp)
+                    frame_1.append(frame_1_temp)
+                    frame_2.append(frame_2_temp)
+                    mfcc_temp, audio_temp, spec_temp, frame_1_temp, frame_2_temp = [], [], [], [], []
+                    every_five = 1
+                else:
+                    every_five += 1
+
             print(filename, "read")
 
         if verbose:
@@ -56,26 +72,20 @@ def load_cuave(verbose=False):
             print(frame_1[:10])
             print(frame_2[:10])
 
-        # # 5 contiguous frames to use as input
-        # shape = (int(len(label)/5), 5)
-        # label = np.array(label).reshape(shape)
-        # mfcc = np.array(mfcc).reshape(shape)
-        # audio = np.array(audio).reshape(shape)
-        # spec = np.array(spec).reshape(shape)
-        # frame_1 = np.array(frame_1).reshape(shape)
-        # frame_2 = np.array(frame_2).reshape(shape)
+        # 5 contiguous frames to use as input
+        label = np.array(label).reshape(int(len(label)/5), 5)
 
-        # drop_row_idx = []
-        # for k in range(label.shape[0]):
-        #     if np.unique(label[k]).size == 2:
-        #         drop_row_idx.append(k)
-        
-        # label = np.delete(label, (drop_row_idx), axis=0)
-        # mfcc = np.delete(mfcc, (drop_row_idx), axis=0)
-        # audio = np.delete(audio, (drop_row_idx), axis=0)
-        # spec = np.delete(spec, (drop_row_idx), axis=0)
-        # frame_1 = np.delete(frame_1, (drop_row_idx), axis=0)
-        # frame_2 = np.delete(frame_2, (drop_row_idx), axis=0)
+        drop_row_idx = []
+        for k in range(label.shape[0]):
+            if np.unique(label[k]).size == 2:
+                drop_row_idx.append(k)
+
+        label = np.delete(label, (drop_row_idx), axis=0)
+        mfcc = np.delete(mfcc, (drop_row_idx), axis=0)
+        audio = np.delete(audio, (drop_row_idx), axis=0)
+        spec = np.delete(spec, (drop_row_idx), axis=0)
+        frame_1 = np.delete(frame_1, (drop_row_idx), axis=0)
+        frame_2 = np.delete(frame_2, (drop_row_idx), axis=0)
 
         # write processed data to external files
         print("no processed data exist\nstart writing processed data")
@@ -92,31 +102,55 @@ def load_cuave(verbose=False):
 # load the AVLetters dataset
 def load_avletter(verbose=False):
     # para verbose: whether or not to print more info
-    names = data_config['data']['avletter']['name']
-    mfcc_file = data_config['data']['avletter']['vocal']
-    frame_file = data_config['data']['avletter']['visual']
-    processed = data_config['data']['processed']['avletter']
+    processed_dir = data_config['data']['processed']['avletter']
 
-    base = ord('A')
-    mfcc, frame, label = [], [], []
-    for i in range(26):
-        for name in names:
-            for num in [1, 2, 3]:
-                temp_mfcc = np.loadtxt(os.path.join(mfcc_file, '%s%d_%s.mat' % (chr(base+i), num, name)))
-                temp_frame = loadmat(os.path.join(frame_file, '%s%d_%s-lips.mat' % (chr(base+i), num, name)))
-                temp_vid = temp_frame['vid']
-                (h, w, no_frame) = temp_frame['siz'][0]
-                for j in range(int(no_frame)):
-                    frame.append(np.reshape(temp_vid[:,j], (int(h), int(w))))
-                    label.append(i) # ASCII value for label
-                # print(temp_mfcc.shape, no_frame)
+    if len(os.listdir(processed_dir)) == 4:
+        print("processed data exist\nstart loading processed data")
+        mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
+        frame = np.load(os.path.join(processed_dir, 'frames.npy'))
+        label = np.load(os.path.join(processed_dir, 'labels.npy'))
 
-    if verbose:
-        print(mfcc[:20])
+    else:
+        base = ord('A')
+        mfcc, frame, label = [], [], []
+        names = data_config['data']['avletter']['name']
+        mfcc_file = data_config['data']['avletter']['vocal']
+        frame_file = data_config['data']['avletter']['visual']
+        for i in range(26):
+            for name in names:
+                for num in [1, 2, 3]:
+                    # load mfccs
+                    mfcc_temp = np.loadtxt(os.path.join(mfcc_file, '%s%d_%s.mat' % (chr(base+i), num, name)))
+                    # load frames
+                    frame_temp = loadmat(os.path.join(frame_file, '%s%d_%s-lips.mat' % (chr(base+i), num, name)))
+                    vid_temp = frame_temp['vid']
+                    (h, w, no_frame) = frame_temp['siz'][0]
+                    # reshape the matrix
+                    while mfcc_temp.shape[0] != int(no_frame) * 2:
+                        mfcc_temp = np.vstack((mfcc_temp, mfcc_temp[-1,:]))
+                    mfcc_temp_reshape = np.reshape(mfcc_temp, (int(no_frame*4), 13), order='F')
+                    for j in range(int(no_frame)):
+                        vid_temp_reshape, temp_1, temp_2 = np.reshape(vid_temp[:,j], (int(h), int(w))), [], []
+                        for k in range(1, 5):
+                            temp_1.append(vid_temp_reshape[:, 20*(k-1):20*k])
+                            temp_2.append(mfcc_temp_reshape[4*int(no_frame-1)+k-1, :])
+                        frame.append(temp_1)
+                        mfcc.append(temp_2)
+                        label.append(i) # ASCII value for label
+            print("%s character loaded" % chr(base+i))
 
-    # np.savetxt(os.path.join(processed, 'mfccs.csv'), mfcc)
-    # np.save(os.path.join(processed, 'frames'), frame)
-    # np.savetxt(os.path.join(processed, 'labels.csv'), label, fmt='%d')
+        if verbose:
+            print(label[:20])
+            print(mfcc[:20])
+            print(frame[:20])
+
+        # write processed data to external files
+        print("no processed data exist\nstart writing processed data")
+        np.save(os.path.join(processed_dir, 'mfccs'), mfcc)
+        np.save(os.path.join(processed_dir, 'frames'), frame)
+        np.save(os.path.join(processed_dir, 'labels'), label)
+
+    return mfcc, frame, label
 
 
 # helper function to visualize frames

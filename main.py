@@ -2,7 +2,7 @@ from src.utility import load_cuave, load_avletter, visualize_frame, visualize_sp
 from src.autoencoder import Autoencoder
 
 def main():
-    load_cuave(verbose=True)
+    load_avletter()
     # visualize_frame('cuave_2')
     # visualize_spectrogram('cuave', write=True)
     # ae = Autoencoder('cuave','spectrogram')

@@ -23,7 +23,7 @@ The elements contained in each ```g_aligned.mat``` are listed as follows.
 * flowY
 * flowStats
 
-The video frames can be visualized via ```visualize_frame()``` in ```utility.py```. Four examples in the frames are displayed as below.
+The video frames are double-size of mfccs or other audio data, which motivates to use the second part video frames as unlabelled data in the feature learning. The video frames can also be visualized via ```visualize_frame()``` in ```utility.py```. Four examples in the frames are displayed as below.
 
 | | 1st | 2nd | 3rd | 4th |
 |-| --  | --  | --  | --  |

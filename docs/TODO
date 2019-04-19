@@ -2,15 +2,15 @@ bimodal speech recognition:
     ☐ read CUAVE paper
     ✔ understand dataset well @done(19-04-06 12:16)
     ✔ visualize frames if necessary @done(19-04-06 20:50)
-    ☐ solve the dimensionality problem
+    ✔ solve the dimensionality problem @done(19-04-19 14:56)
     This problem arises perhaps because each mfcc file (containing entire information about one person speaking one letter, which of course, last for more than one frame) might contain 4 frames according to the visualization of the lips. Therefore, (2n-1) * (2*13) could be mfcc for 4 frames. Solve tommorrow
     ✔ get spectrogram feature for audio @done(19-04-08 17:55)
     ☐ build the pipeline
         ☐ build the RBM
         ✔ build the AE for single modality @done(19-04-18 17:32)
-    ☐ upload preprocessed data (5 contiguous frames)
+    ✔ upload preprocessed data (5 contiguous frames for CUAVE and 4 for AVLetters) @done(19-04-19 14:57)
     ☐ re-implement experiment
         ☐ multimodal fusion
         ☐ cross-modality learning
         ☐ shared representation learning
-    ☐ temporal derivates
+    ☐ temporal derivates (optional)
