@@ -3,9 +3,10 @@ import json
 import numpy as np
 import pandas as pd
 import skimage.io as io
+import matplotlib.pyplot as plt
 from scipy.io import loadmat
 from scipy.signal import spectrogram
-import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 
 data_config = json.load(open('./config/config.json', 'r'))
@@ -16,18 +17,17 @@ def load_cuave(verbose=False):
     # para verbose: whether or not to print more 
     processed_dir = data_config['data']['processed']['cuave']
 
-    if len(os.listdir(processed_dir)) == 6:
+    if len(os.listdir(processed_dir)) == 9:
         print("processed data exist\nstart loading processed data")
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
         audio = np.load(os.path.join(processed_dir, 'audio.npy'))
-        spec = np.load(os.path.join(processed_dir, 'spectrogram.npy'))
         frame_1 = np.load(os.path.join(processed_dir, 'frames_1.npy'))
         frame_2 = np.load(os.path.join(processed_dir, 'frames_2.npy'))
         label = np.load(os.path.join(processed_dir, 'labels.npy'))
 
     else:
-        mfcc, audio, spec, frame_1, frame_2, label = [], [], [], [], [], []
-        mfcc_temp, audio_temp, spec_temp, frame_1_temp, frame_2_temp = [], [], [], [], []
+        mfcc, audio, frame_1, frame_2, label = [], [], [], [], []
+        mfcc_temp, audio_temp, frame_1_temp, frame_2_temp = [], [], [], []
         every_five = 1
         for index in range(1, 23):
             filename = "g%s_aligned.mat" % str(index).zfill(2)
@@ -36,16 +36,13 @@ def load_cuave(verbose=False):
             label.extend(each['labels'][0])
             each_mfcc = each['mfccs']
             each_audio = each['audioIndexed']
-            fs = each['fs'][0][0]
             each_frame_1 = each['video'][0][0]
             each_frame_2 = each['video'][0][1]
             for i in range(len(each['labels'][0])):
                 # load vocal features (mfcc)
                 mfcc_temp.append(each_mfcc[:,i])
-                # load vocal modality data (along with spectrogram)
+                # load vocal modality data 
                 audio_temp.append(each_audio[:,i])
-                f, t, Sxx = spectrogram(each_audio[:,i], fs=fs)
-                spec_temp.append((f, t, Sxx))
                 # load visual modality data
                 frame_1_temp.append(each_frame_1[:,:,i])
                 frame_2_temp.append(each_frame_2[:,:,i])
@@ -54,10 +51,9 @@ def load_cuave(verbose=False):
                     # push features at a freq of five
                     mfcc.append(mfcc_temp)
                     audio.append(audio_temp)
-                    spec.append(spec_temp)
                     frame_1.append(frame_1_temp)
                     frame_2.append(frame_2_temp)
-                    mfcc_temp, audio_temp, spec_temp, frame_1_temp, frame_2_temp = [], [], [], [], []
+                    mfcc_temp, audio_temp, frame_1_temp, frame_2_temp = [], [], [], []
                     every_five = 1
                 else:
                     every_five += 1
@@ -68,11 +64,10 @@ def load_cuave(verbose=False):
             print(label[:10])
             print(mfcc[:10])
             print(audio[:10])
-            print(spec[:10])
             print(frame_1[:10])
             print(frame_2[:10])
 
-        # 5 contiguous frames to use as input
+        # 4 contiguous frames to use as input
         label = np.array(label[:-3]).reshape(int(len(label)/4), 4)
 
         drop_row_idx = []
@@ -83,7 +78,6 @@ def load_cuave(verbose=False):
         label = np.delete(label, (drop_row_idx), axis=0)
         mfcc = np.delete(mfcc, (drop_row_idx), axis=0)
         audio = np.delete(audio, (drop_row_idx), axis=0)
-        spec = np.delete(spec, (drop_row_idx), axis=0)
         frame_1 = np.delete(frame_1, (drop_row_idx), axis=0)
         frame_2 = np.delete(frame_2, (drop_row_idx), axis=0)
 
@@ -91,12 +85,11 @@ def load_cuave(verbose=False):
         print("no processed data exist\nstart writing processed data")
         np.save(os.path.join(processed_dir, 'mfccs'), mfcc)
         np.save(os.path.join(processed_dir, 'audio'), audio)
-        np.save(os.path.join(processed_dir, 'spectrogram'), spec)
         np.save(os.path.join(processed_dir, 'frames_1'), frame_1)
         np.save(os.path.join(processed_dir, 'frames_2'), frame_2)
         np.save(os.path.join(processed_dir, 'labels'), label)
 
-    return mfcc, audio, spec, frame_1, frame_2, label
+    return mfcc, audio, frame_1, frame_2, label
 
 
 # load the AVLetters dataset
@@ -249,3 +242,67 @@ def visualize_reconstruction(origin, recon, size):
     plt.imshow(recon.reshape((size, size)), cmap=plt.cm.gray)
 
     plt.show()
+
+
+def pca_frame(dataset):
+    # para dataset: name of dataset to be used
+    processed_dir = data_config['data']['processed'][dataset]
+    if dataset == 'cuave':
+        frame_1 = np.load(os.path.join(processed_dir, 'frames_1.npy'))
+        frame_2 = np.load(os.path.join(processed_dir, 'frames_2.npy'))
+        frame_1 = np.reshape(frame_1, (int(frame_1.shape[0]*frame_1.shape[1]), frame_1.shape[2], frame_1.shape[3]))
+        frame_2 = np.reshape(frame_2, (int(frame_2.shape[0]*frame_2.shape[1]), frame_2.shape[2], frame_2.shape[3]))
+
+        print(frame_1.shape, frame_2.shape)
+
+        frame_temp_1, frame_temp_2 = [], []
+        for i in range(len(frame_1)):
+            frame_temp_1.append(frame_1[i].flatten())
+            frame_temp_2.append(frame_2[i].flatten())
+
+        pca_1, pca_2 = PCA(n_components=32), PCA(n_components=32)
+        frame_pca_1 = pca_1.fit_transform(frame_temp_1)
+        frame_pca_2 = pca_2.fit_transform(frame_temp_2)
+
+        print(frame_pca_1.shape, frame_pca_2.shape)
+
+        frame_pca_1 = np.reshape(frame_pca_1, (int(frame_pca_1.shape[0]/4), 4, frame_pca_1.shape[1]))
+        frame_pca_2 = np.reshape(frame_pca_2, (int(frame_pca_2.shape[0]/4), 4, frame_pca_2.shape[1]))
+
+        print(frame_pca_1.shape, frame_pca_2.shape)
+
+        np.save(os.path.join(processed_dir, 'frames_pca_1'), frame_pca_1)
+        np.save(os.path.join(processed_dir, 'frames_pca_2'), frame_pca_2)
+
+
+def concatenate_data(dataset):
+    # para dataset: name of dataset to be used
+    processed_dir = data_config['data']['processed'][dataset]
+    if dataset == 'cuave':
+        mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
+        frame_1 = np.load(os.path.join(processed_dir, 'frames_pca_1.npy'))
+        frame_2 = np.load(os.path.join(processed_dir, 'frames_pca_2.npy'))
+
+        # ensure dimensionality match
+        assert len(mfcc) == len(frame_1) == len(frame_2)
+
+        concat_data_1, concat_data_2 = [0]*len(mfcc), [0]*len(mfcc)
+        for i in range(len(mfcc)):
+            concat_data_1[i] = np.hstack((frame_1[i].flatten(), mfcc[i].flatten()))
+            concat_data_2[i] = np.hstack((frame_2[i].flatten(), mfcc[i].flatten()))
+        
+        print(np.array(concat_data_1).shape, np.array(concat_data_2).shape)
+        
+        np.save(os.path.join(processed_dir, 'concat_data_1'), concat_data_1)
+        np.save(os.path.join(processed_dir, 'concat_data_2'), concat_data_2)
+
+
+def load_concatenate_data(dataset):
+    # para dataset: name of dataset to be used
+    processed_dir = data_config['data']['processed'][dataset]
+    if dataset == 'cuave':
+        concat_data_1 = np.load(os.path.join(processed_dir, 'concat_data_1.npy'))
+        concat_data_2 = np.load(os.path.join(processed_dir, 'concat_data_2.npy'))
+
+        return np.vstack((concat_data_1, concat_data_2))
+

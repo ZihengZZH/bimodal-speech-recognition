@@ -41,6 +41,11 @@ Train a multimodal model by concatenating audio and video data.
 
 > While this approach jointly models the distribution of the audio and video data, it is limited as a shallow model. Since the correlations between the audio and video data are highly non-linear, it is hard for a RBM to learn these correlations and form multimodal representations. In particular, they (Ngiam2011) found the learning a shallow bimodal RBM results in hidden units that have a strong connections to variables from individual modality but few units that connect across the modalities.
 
+| dataset | dimensionality | after PCA | hidden layer in RBM |
+| --      | --             | --        | --                  |
+| CUAVE   | 4\*75\*50 + 4*13 = 15052 | 4\*32 + 4\*13 = 180 | 15 |
+| AVLetter| | |
+
 **cross-modality learning**
 
 Motivated by deep learning methods, greedily train a RBM over the pre-trained layers for each modality. 

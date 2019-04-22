@@ -9,8 +9,14 @@ bimodal speech recognition:
         ☐ build the RBM
         ✔ build the AE for single modality @done(19-04-18 17:32)
     ✔ upload preprocessed data (5 contiguous frames for CUAVE and 4 for AVLetters) @done(19-04-19 14:57)
+    ☐ CUAVE dataset
+        ☐ retain face images and find more in feature learning (evaluate performance on face image)
+        ☐ data argumentation (generate more images based on the dataset) (rotation, mirror)
+    ☐ AVLetters
+        ☐ retain lip images and find more in feature learning (evaluate performance on lip image)
     ☐ re-implement experiment
-        ☐ multimodal fusion
+        ✔ multimodal fusion @done(19-04-22 23:21)
         ☐ cross-modality learning
         ☐ shared representation learning
     ☐ temporal derivates (optional)
+    ☐ visualize the representation using e.g. tSNE
