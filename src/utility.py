@@ -306,3 +306,9 @@ def load_concatenate_data(dataset):
 
         return np.vstack((concat_data_1, concat_data_2))
 
+
+def contiguous(data):
+    if len(data.shape) == 3:
+        return np.reshape(data, (data.shape[0], int(data.shape[1]*data.shape[2])))
+    else:
+        return data

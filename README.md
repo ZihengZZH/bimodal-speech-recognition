@@ -43,7 +43,7 @@ Train a multimodal model by concatenating audio and video data.
 
 | dataset | dimensionality | after PCA | hidden layer in RBM |
 | --      | --             | --        | --                  |
-| CUAVE   | 4\*75\*50 + 4*13 = 15052 | 4\*32 + 4\*13 = 180 | 15 |
+| CUAVE   | 4\*75\*50 + 4*13 = 15052 | 4\*32 + 4\*13 = 180 | 50 |
 | AVLetter| | |
 
 **cross-modality learning**
@@ -56,3 +56,10 @@ Motivated by deep learning methods, greedily train a RBM over the pre-trained la
 
 **shared representation learning**
 
+## Experiment Results
+
+| dataset | modality | models        | acc (%) |
+| --      | --       | --            | --      |
+| CUAVE   | mfcc     | random forest | 56.3    |
+| CUAVE   | audio    | random forest | 45.1    |
+| CUAVE   | video    | random forest | 91.8    |

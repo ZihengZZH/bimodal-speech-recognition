@@ -31,9 +31,9 @@
         "save_dir": "./models"
     },
     "boltzmann": {
-        "visible_dim": 180,
-        "hidden_dim": 15,
-        "batch_size": 32,
+        "visible_dim": 52,
+        "hidden_dim": 13,
+        "batch_size": 16,
         "epochs": 50,
         "save_dir": "./models"
     }
