@@ -7,7 +7,7 @@ from keras.models import Sequential, Model
 from keras.layers import Input, Dense
 from keras.utils import plot_model
 from sklearn.model_selection import train_test_split
-from src.utility import load_cuave
+from src.utility import load_cuave, load_avletter
 
 
 class Autoencoder(object):
@@ -42,16 +42,14 @@ class Autoencoder(object):
         directory for model saving (load config)
     """
 
-    def __init__(self, dataset_name, modality_name):
-        """
-        # para dataset_name: which dataset to use 
-        # para modality_name: which modality to use
-        """
+    def __init__(self, dataset_name, modality_name, X, y):
+
         self._dataset_name = dataset_name
         self._modality_name = modality_name
         self.X_train = None
         self.X_test = None
-        self.y_label = None
+        self.y_train = None
+        self.y_test = None
         self.encoder = None
         self.decoder = None
         self.autoencoder = None
@@ -61,8 +59,8 @@ class Autoencoder(object):
         self.batch_size = self.config['autoencoder']['batch_size']
         self.epochs = self.config['autoencoder']['epochs']
         self.save_dir = self.config['autoencoder']['save_dir']
-        self._prepare_data()
-        self.input_dim = self.w * self.h
+        self._prepare_data(X, y)
+        self.input_dim = self.config['autoencoder']['input_dim']
 
     def _flatten(self, X, image=True):
         """flatten images to 1D array [private]
@@ -86,31 +84,35 @@ class Autoencoder(object):
         self.X_train = self._flatten(X_train)
         self.X_test = self._flatten(X_test)
     
-    def _prepare_data(self):
+    def _prepare_data(self, X, y):
         """prepare data for the model [private]
         X_train/X_test should be modified individually based on modality
         """
-        if self._dataset_name == 'cuave':
-            mfccs, audio, spec, frames_1, _, labels = load_cuave()
-            if self._modality_name == 'mfcc':
-                self.X_train, self.X_test, _, _ = train_test_split(mfccs, labels, test_size=0.25)
-            elif self._modality_name == 'audio':
-                self.X_train, self.X_test, _, _ = train_test_split(audio, labels, test_size=0.25)
-            elif self._modality_name == 'spectrogram':
-                Sxx = np.array(spec)[:,2]
-                self.X_train, self.X_test, _, _ = train_test_split(Sxx, labels, test_size=0.25)
-                self.w, self.h = self.X_train[0].shape
-                # flatten spectrograms to 1D array
-                self.X_train, self.X_test = self._flatten(self.X_train, image=False), self._flatten(self.X_test, image=False)
-            elif self._modality_name == 'frame':
-                self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
-                self.w, self.h = self.X_train[0].shape
-                # flatten frames to 1D array
-                self.X_train, self.X_test = self._flatten(self.X_train), self._flatten(self.X_test)
+        if X.any() and y.any():
+            print(X.shape, y.shape)
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.25)
+        
+        # if self._dataset_name == 'cuave':
+        #     mfccs, audio, frames_1, frames_2, labels = load_cuave()
+        #     if self._modality_name == 'mfcc':
+        #         self.X_train, self.X_test, _, _ = train_test_split(mfccs, labels, test_size=0.25)
+        #     elif self._modality_name == 'audio':
+        #         self.X_train, self.X_test, _, _ = train_test_split(audio, labels, test_size=0.25)
+        #     elif self._modality_name == 'frame':
+        #         self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
+        #         self.w, self.h = self.X_train[0].shape
+        #         # flatten frames to 1D array
+        #         self.X_train, self.X_test = self._flatten(self.X_train), self._flatten(self.X_test)
             
-        elif self._dataset_name == 'avletter':
-            self.X_train = None
-            self.y_label = None
+        # elif self._dataset_name == 'avletter':
+        #     mfcc, frame, label = load_avletter()
+        #     if self._modality_name == 'mfcc':
+        #         self.X_train, self.X_test, _, _ = train_test_split(mfccs, labels, test_size=0.25)
+        #     elif self._modality_name == 'frame':
+        #         self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
+        #         self.w, self.h = self.X_train[0].shape
+        #         # flatten frames to 1D array
+        #         self.X_train, self.X_test = self._flatten(self.X_train), self._flatten(self.X_test)
         
         print("Training data dimensionality", self.X_train.shape)
         print("Test data dimensionality", self.X_test.shape)
@@ -212,3 +214,8 @@ class Autoencoder(object):
 
         plt.show()
 
+    def transform(self, X_input):
+        """transform inputs to latent representations
+        """
+        y_pred = self.encoder.predict(X_input)
+        return y_pred

@@ -21,8 +21,8 @@ def load_cuave(verbose=False):
         print("processed data exist\nstart loading processed data")
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
         audio = np.load(os.path.join(processed_dir, 'audio.npy'))
-        frame_1 = np.load(os.path.join(processed_dir, 'frames_1.npy'))
-        frame_2 = np.load(os.path.join(processed_dir, 'frames_2.npy'))
+        frame_1 = np.load(os.path.join(processed_dir, 'frames_pca_1.npy'))
+        frame_2 = np.load(os.path.join(processed_dir, 'frames_pca_2.npy'))
         label = np.load(os.path.join(processed_dir, 'labels.npy'))
 
     else:
@@ -97,7 +97,7 @@ def load_avletter(verbose=False):
     # para verbose: whether or not to print more info
     processed_dir = data_config['data']['processed']['avletter']
 
-    if len(os.listdir(processed_dir)) == 4:
+    if len(os.listdir(processed_dir)) == 5:
         print("processed data exist\nstart loading processed data")
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
         frame = np.load(os.path.join(processed_dir, 'frames.npy'))
@@ -260,7 +260,7 @@ def pca_frame(dataset):
             frame_temp_1.append(frame_1[i].flatten())
             frame_temp_2.append(frame_2[i].flatten())
 
-        pca_1, pca_2 = PCA(n_components=32), PCA(n_components=32)
+        pca_1, pca_2 = PCA(n_components=256), PCA(n_components=256)
         frame_pca_1 = pca_1.fit_transform(frame_temp_1)
         frame_pca_2 = pca_2.fit_transform(frame_temp_2)
 
@@ -280,21 +280,37 @@ def concatenate_data(dataset):
     processed_dir = data_config['data']['processed'][dataset]
     if dataset == 'cuave':
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
+        audio = np.load(os.path.join(processed_dir, 'audio.npy'))
         frame_1 = np.load(os.path.join(processed_dir, 'frames_pca_1.npy'))
         frame_2 = np.load(os.path.join(processed_dir, 'frames_pca_2.npy'))
 
         # ensure dimensionality match
-        assert len(mfcc) == len(frame_1) == len(frame_2)
+        assert len(audio) == len(frame_1) == len(frame_2)
 
-        concat_data_1, concat_data_2 = [0]*len(mfcc), [0]*len(mfcc)
+        concat_data_1, concat_data_2 = [0]*len(audio), [0]*len(audio)
         for i in range(len(mfcc)):
-            concat_data_1[i] = np.hstack((frame_1[i].flatten(), mfcc[i].flatten()))
-            concat_data_2[i] = np.hstack((frame_2[i].flatten(), mfcc[i].flatten()))
+            concat_data_1[i] = np.hstack((frame_1[i].flatten(), audio[i].flatten()))
+            concat_data_2[i] = np.hstack((frame_2[i].flatten(), audio[i].flatten()))
         
         print(np.array(concat_data_1).shape, np.array(concat_data_2).shape)
         
-        np.save(os.path.join(processed_dir, 'concat_data_1'), concat_data_1)
-        np.save(os.path.join(processed_dir, 'concat_data_2'), concat_data_2)
+        np.save(os.path.join(processed_dir, 'concat_data_audio_1'), concat_data_1)
+        np.save(os.path.join(processed_dir, 'concat_data_audio_2'), concat_data_2)
+    
+    elif dataset == 'avletter':
+        mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
+        frame = np.load(os.path.join(processed_dir, 'frames.npy'))
+        
+        # ensure dimensionality match
+        assert len(mfcc) == len(frame)
+
+        concat_data = [0]*len(mfcc)
+        for i in range(len(mfcc)):
+            concat_data[i] = np.hstack((frame[i].flatten(), mfcc[i].flatten()))
+        
+        print(np.array(concat_data).shape)
+        
+        np.save(os.path.join(processed_dir, 'concat_data'), concat_data)
 
 
 def load_concatenate_data(dataset):
@@ -306,9 +322,16 @@ def load_concatenate_data(dataset):
 
         return np.vstack((concat_data_1, concat_data_2))
 
+    elif dataset == 'avletter':
+        concat_data = np.load(os.path.join(processed_dir, 'concat_data.npy'))
+
+        return concat_data
+
 
 def contiguous(data):
     if len(data.shape) == 3:
         return np.reshape(data, (data.shape[0], int(data.shape[1]*data.shape[2])))
+    elif len(data.shape) == 4:
+        return np.reshape(data, (data.shape[0], int(data.shape[1]*data.shape[2]*data.shape[3])))
     else:
         return data

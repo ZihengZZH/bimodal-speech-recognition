@@ -20,3 +20,8 @@ bimodal speech recognition:
         ☐ shared representation learning
     ☐ temporal derivates (optional)
     ☐ visualize the representation using e.g. tSNE
+
+report:
+    ☐ deep learning, rbm
+    ☐ ngiam
+    ☐ survey (recent advance)

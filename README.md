@@ -63,3 +63,7 @@ Motivated by deep learning methods, greedily train a RBM over the pre-trained la
 | CUAVE   | mfcc     | random forest | 56.3    |
 | CUAVE   | audio    | random forest | 45.1    |
 | CUAVE   | video    | random forest | 91.8    |
+| CUAVE   | bimodal fusion |         | 36.22   |
+| AVLetters | bimodal fusion | mfcc + lips | 49.27 |
+| CUAVE   | share   | face + mfcc | 79.28 |
+| AVLetters | share | mouth + mfcc | 46.36 |
