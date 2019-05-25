@@ -4,22 +4,6 @@ from sklearn.model_selection import train_test_split
 from tensorflow.python.ops import resources
 from tensorflow.contrib.tensor_forest.python import tensor_forest
 
-# from src.utility import load_cuave
-
-# mfccs, audio, frames_1, _, labels = load_cuave()
-# use_audio = True
-# if use_audio:
-#         audio = np.reshape(audio, (audio.shape[0], int(audio.shape[1]*audio.shape[2])))
-#         labels = labels[:,0]
-#         print(audio.shape, labels.shape)
-#         X_train, X_test, y_train, y_test = train_test_split(audio, labels, test_size=0.25, random_state=1)
-#         num_features = 534*4
-# else:
-#         frames_1 = np.reshape(frames_1, (frames_1.shape[0], int(frames_1.shape[1]*frames_1.shape[2]*frames_1.shape[3])))
-#         labels = labels[:,0]
-#         print(frames_1.shape, labels.shape)
-#         X_train, X_test, y_train, y_test = train_test_split(frames_1, labels, test_size=0.25, random_state=1)
-#         num_features = 75*50*4
 
 def tree_models(X, y, num_feat, num_class):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=1)

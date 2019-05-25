@@ -24,11 +24,12 @@
     },
     "representation": "",
     "autoencoder": {
-        "input_dim": 4852,
-        "hidden_dim": 50,
-        "batch_size": 64,
+        "hidden_ratio": 0.3,
+        "batch_size": 32,
         "epochs": 20,
-        "save_dir": "./models"
+        "save_dir": "./models/AE_models",
+        "save_dir_bimodal": "./models/AE_bimodal_models",
+        "encoded": "./dataset/encoded"
     },
     "boltzmann": {
         "visible_dim": 2136,

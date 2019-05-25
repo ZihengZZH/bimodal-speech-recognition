@@ -1,106 +1,90 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from src.utility import load_cuave, load_avletter, concatenate_data, load_concatenate_data, pca_frame, contiguous
-from src.boltzmann import RBM, BBRBM, GBRBM
+from src.utility import load_data, flatten_data
 from src.autoencoder import Autoencoder
+from src.autoencoder_bimodal import AutoencoderBimodal
 from src.linearsvm import LinearSVM
 from src.forest import tree_models
-
-
-def audio_only():
-    '''
-    2136 (712) for CUAVE
-    '''
-    _, audio, _, _, labels = load_cuave()
-    audio = contiguous(audio)
-    print(audio.shape)
-    bbrbm = BBRBM(use_tqdm=True)
-    # errs = bbrbm.fit(audio)
-    # bbrbm.save_weights('audio_only_cuave')
-    # plt.plot(errs)
-    # plt.show()
-    bbrbm.load_weights('audio_only_cuave')
-    repres = bbrbm.transform(audio)
-    tree_models(repres, labels[:,0], repres.shape[1], 4)
+from sklearn.model_selection import train_test_split
 
 
 
-def video_only():
-    '''
-    15000 (5000) for CUAVE
-    8192 (2048) for CUAVE PCA
-    '''
-    _, _, frame_1, frame_2, labels = load_cuave()
-    print(frame_1.shape, frame_2.shape)
-    frames = contiguous(np.vstack((frame_1, frame_2)))
-    print(frames.shape)
-    bbrbm = BBRBM(use_tqdm=True)
-    # errs = bbrbm.fit(frames)
-    # bbrbm.save_weights('video_only_cuave')
-    # plt.plot(errs)
-    # plt.show()
-    bbrbm.load_weights('video_only_cuave')
-    repres = bbrbm.transform(frames)
-    tree_models(repres, labels[:,0], repres.shape[1], 4)
+def baseline(dataset):
+    audio, _, _, labels = load_data(dataset, 'audio', 'frame', verbose=True)
+    
+    X = flatten_data(audio, image=False)
+    y = labels[:,0]
+
+    print("--" * 20)
+    print("processed data shape", X.shape)
+    print("processed label shape", y.shape)
+    print("--" * 20)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+
+    assert X_train.shape[1] == X_test.shape[1]
+
+    test_AE = Autoencoder(dataset, 'audio', X_train.shape[1])
+    test_AE.build_model()
+    test_AE.train_model(X_train)
+    
+    X_encoded_train = test_AE.transform(X_train)
+    X_encoded_test = test_AE.transform(X_test)
+
+    test_SVM = LinearSVM('%s_baseline_%s' % (dataset, 'audio'))
+    test_SVM.train(X_encoded_train, y_train)
+    test_SVM.test(X_encoded_test, y_test)
 
 
 def bimodal_fusion(dataset):
-    """
-    180 (36) for CUAVE (frames PCA & mfcc)
-    4852 (1000) for AVLetters
-    """
-    concat_data = load_concatenate_data(dataset)
-    print(concat_data.shape)
-    bbrbm = BBRBM(use_tqdm=True)
-    # errs = bbrbm.fit(concat_data)
-    # bbrbm.save_weights('avletter_fusion')
-    # plt.plot(errs)
-    # plt.show()
-    bbrbm.load_weights('avletter_fusion')
-    repres = bbrbm.transform(concat_data)
-    
-    if dataset == 'cuave':
-        _, _, _, _, label = load_cuave()
-    else:
-        _, _, label = load_avletter()
-
-    tree_models(repres, label[:,0], repres.shape[1], 26)
+    pass
 
 
 def cross_modality(dataset):
-    concat_data = load_concatenate_data(dataset)
-    print(concat_data.shape)
-    if dataset == 'cuave':
-        _, _, _, _, label = load_cuave()
-    else:
-        _, _, label = load_avletter()
+    mfccs, frames_1, frames_2, labels = load_data(dataset, 'mfcc', 'frame', verbose=True)
+
+    X_A = np.vstack((flatten_data(mfccs, image=False), flatten_data(mfccs, image=False)))
+    X_V = np.vstack((flatten_data(frames_1, image=True), flatten_data(frames_2, image=True)))
+    y = np.hstack((labels[:,0], labels[:,0]))
+
+    print("--" * 20)
+    print("processed data A shape", X_A.shape)
+    print("processed data V shape", X_V.shape)
+    print("processed label shape", y.shape)
+    print("--" * 20)
+
+    assert X_A.shape[0] == X_V.shape[0] == y.shape[0]
+
+    no_sample = y.shape[0]
+    pivot = int(no_sample * 0.67)
+
+    X_train_A, X_test_A = X_A[:pivot, :], X_A[pivot:, :]
+    X_train_V, X_test_V = X_V[:pivot, :], X_V[pivot:, :]
+    y_train, y_test = y[:pivot], y[pivot:]
+
+    assert X_train_A.shape[1] == X_test_A.shape[1]
+    assert X_train_V.shape[1] == X_test_V.shape[1]
+    assert X_train_A.shape[0] == X_train_V.shape[0] == len(y_train)
+    assert X_test_A.shape[0] == X_test_V.shape[0] == len(y_test)
+
+    test_AE = AutoencoderBimodal(dataset, 'cross_mfcc', X_train_A.shape[1], X_train_V.shape[1])
+    test_AE.build_model()
+    test_AE.train_model(X_train_A, X_train_V)
     
-    # label = label[:,0]
-    # label = np.hstack((label, label))
-    # label = np.reshape(label, (len(label), 1))
+    X_encoded_train = test_AE.transform(X_train_A, X_train_V)
+    X_encoded_test = test_AE.transform(X_test_A, X_test_V)
 
-    ae = Autoencoder(dataset, 'cross_modality', concat_data, label)
-    ae.build_model()
-    # ae.train_model()
-    ae.load_model()
-    repres = ae.transform(concat_data)
-    print(concat_data.shape, repres.shape, label.shape)
-    tree_models(repres, label, 50, 26)
+    test_SVM = LinearSVM('%s_baseline_%s' % (dataset, 'cross_mfcc'))
+    test_SVM.train(X_encoded_train, y_train)
+    test_SVM.test(X_encoded_test, y_test)
 
 
-def shared_repre():
+def shared_repres():
     pass
 
 
 def main():
-    # audio_only()
-    # video_only()
-    # bimodal_fusion('avletter')
-    # concatenate_data('cuave')
-    # pca_frame('cuave')
-    # concatenate_data('avletter')
-    cross_modality('avletter')
-
+    cross_modality('cuave')
 
 if __name__ == "__main__":
     main()

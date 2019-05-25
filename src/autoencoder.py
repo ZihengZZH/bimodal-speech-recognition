@@ -6,140 +6,59 @@ import matplotlib.pyplot as plt
 from keras.models import Sequential, Model
 from keras.layers import Input, Dense
 from keras.utils import plot_model
-from sklearn.model_selection import train_test_split
-from src.utility import load_cuave, load_avletter
 
 
 class Autoencoder(object):
     """
-    The base autoencoder implementation
+    Deep Autoencoder
     ---
     Attributes
     -----------
-    _dataset_name: str [private]
-        a string indicating the dataset to use
-    _modality_name: str [private]
-        a string indicating the modality to use
-    X_train/X_test: np.array
-        a numpy array storing the training/test data (#num x dim)
-    y_label: np.array
-        a numpy array storing the label (#num x 1)
-    encoder/decoder: keras.models.Model()
-        the encoder/decoder part of the entire model
-    autoencoder: keras.models.Model()
-        the entire autoencoder model
-    w/h: int
-        width/height for input data (if applicable)
-    input_dim: int
-        dimensionality of input data (w x h)
-    hidden_dim: int
-        dimensionality of hidden layer (load config)
-    batch_size: int
-        batch size during training (load config)
-    epochs: int
-        epochs during training (load config)
-    save_dir
-        directory for model saving (load config)
+
     """
-
-    def __init__(self, dataset_name, modality_name, X, y):
-
-        self._dataset_name = dataset_name
-        self._modality_name = modality_name
-        self.X_train = None
-        self.X_test = None
-        self.y_train = None
-        self.y_test = None
+    def __init__(self, dataset_name, modality_name, input_dim):
+        # para dataset_name:
+        # para modality_name: 
+        # para input_dim:
+        self.dataset_name = dataset_name
+        self.modality_name = modality_name
         self.encoder = None
         self.decoder = None
         self.autoencoder = None
-        self.w, self.h = 0, 0
         self.config = json.load(open('./config/config.json', 'r'))
-        self.hidden_dim = self.config['autoencoder']['hidden_dim']
+        self.hidden_ratio = self.config['autoencoder']['hidden_ratio']
         self.batch_size = self.config['autoencoder']['batch_size']
         self.epochs = self.config['autoencoder']['epochs']
         self.save_dir = self.config['autoencoder']['save_dir']
-        self._prepare_data(X, y)
-        self.input_dim = self.config['autoencoder']['input_dim']
-
-    def _flatten(self, X, image=True):
-        """flatten images to 1D array [private]
-        # para X: entire training/test set (#num x dim(75*50))
-        # para image: whether image or not
-        return X: flattened training/test set
-        """
-        if image:
-            X = X.astype('float32') / 255.
-        else:
-            X = np.array([x.reshape(self.w*self.h, 1) for x in X])
-        X = X.reshape((len(X), np.prod(X.shape[1:])))
-        return X
-
-    def _prepare_toy_data(self):
-        """prepare some toy data (MNIST) for test of model [private]
-        """
-        from keras.datasets import mnist
-        (X_train, _), (X_test, _) = mnist.load_data()
-        self.w, self.h = X_train[0].shape
-        self.X_train = self._flatten(X_train)
-        self.X_test = self._flatten(X_test)
-    
-    def _prepare_data(self, X, y):
-        """prepare data for the model [private]
-        X_train/X_test should be modified individually based on modality
-        """
-        if X.any() and y.any():
-            print(X.shape, y.shape)
-            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.25)
-        
-        # if self._dataset_name == 'cuave':
-        #     mfccs, audio, frames_1, frames_2, labels = load_cuave()
-        #     if self._modality_name == 'mfcc':
-        #         self.X_train, self.X_test, _, _ = train_test_split(mfccs, labels, test_size=0.25)
-        #     elif self._modality_name == 'audio':
-        #         self.X_train, self.X_test, _, _ = train_test_split(audio, labels, test_size=0.25)
-        #     elif self._modality_name == 'frame':
-        #         self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
-        #         self.w, self.h = self.X_train[0].shape
-        #         # flatten frames to 1D array
-        #         self.X_train, self.X_test = self._flatten(self.X_train), self._flatten(self.X_test)
-            
-        # elif self._dataset_name == 'avletter':
-        #     mfcc, frame, label = load_avletter()
-        #     if self._modality_name == 'mfcc':
-        #         self.X_train, self.X_test, _, _ = train_test_split(mfccs, labels, test_size=0.25)
-        #     elif self._modality_name == 'frame':
-        #         self.X_train, self.X_test, _, _ = train_test_split(frames_1, labels, test_size=0.25)
-        #         self.w, self.h = self.X_train[0].shape
-        #         # flatten frames to 1D array
-        #         self.X_train, self.X_test = self._flatten(self.X_train), self._flatten(self.X_test)
-        
-        print("Training data dimensionality", self.X_train.shape)
-        print("Test data dimensionality", self.X_test.shape)
-        print("data preparation done")
+        self.input_dim = input_dim
+        self.hidden_dim = [
+            int(self.input_dim * self.hidden_ratio),
+            int(self.input_dim * self.hidden_ratio ** 2),
+            int(self.input_dim * self.hidden_ratio ** 3)
+        ]
 
     def build_model(self):
         """build (deep) autoencoder model
         """
         # an input placeholder
-        input_data = Input(shape=(self.input_dim,))
+        input_data = Input(shape=(self.input_dim, ))
 
         # encoded representation of the input
-        encoded = Dense(self.hidden_dim * 4, activation='relu')(input_data)
-        encoded = Dense(self.hidden_dim * 2, activation='relu')(encoded)
-        encoded = Dense(self.hidden_dim, activation='relu')(encoded)
+        encoded = Dense(self.hidden_dim[0], activation='relu')(input_data)
+        encoded = Dense(self.hidden_dim[1], activation='relu')(encoded)
+        encoded = Dense(self.hidden_dim[2], activation='relu')(encoded)
         # decoded representation of the input
-        decoded = Dense(self.hidden_dim * 2, activation='relu')(encoded)
-        decoded = Dense(self.hidden_dim * 4, activation='relu')(decoded)
+        decoded = Dense(self.hidden_dim[1], activation='relu')(encoded)
+        decoded = Dense(self.hidden_dim[0], activation='relu')(decoded)
         decoded = Dense(self.input_dim, activation='sigmoid')(decoded)
 
         # maps an input to its reconstruction
-        self.autoencoder = Model(input_data, decoded)
+        self.autoencoder = Model(inputs=input_data, outputs=decoded)
         # maps an input to its encoded representation
-        self.encoder = Model(input_data, encoded)
+        self.encoder = Model(inputs=input_data, outputs=encoded)
 
         # an encoded input placeholder
-        encoded_input = Input(shape=(self.hidden_dim,))
+        encoded_input = Input(shape=(self.hidden_dim[2], ))
         # retrieve layer of the autoencoder model
         decoder_layer1 = self.autoencoder.layers[-3]
         decoder_layer2 = self.autoencoder.layers[-2]
@@ -150,27 +69,28 @@ class Autoencoder(object):
         # configure the model
         self.autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
         print(self.autoencoder.summary())
+        plot_model(self.autoencoder, show_shapes=True, to_file='./images/autoencoder_%s_%s.png' % (self.dataset_name, self.modality_name))
     
-    def train_model(self):
+    def train_model(self, X_train):
         """train (deep) autoencoder model and save to external file
         """
-        self.autoencoder.fit(self.X_train, self.X_train,
+        self.autoencoder.fit(X_train, X_train,
                             epochs=self.epochs,
                             batch_size=self.batch_size,
-                            shuffle=True,
-                            validation_data=(self.X_test, self.X_test))
-        self._save_model()
+                            shuffle=True)
+        self.save_model()
 
-    def _save_model(self):
-        """save (deep) autoencoder model to (indicated) external file [private]
+    def save_model(self):
+        """save (deep) autoencoder model to (indicated) external file
         """
-        save_name = os.path.join(self.save_dir, '%s-%s-%d-%s.h5' % (self._dataset_name, self._modality_name, self.hidden_dim, datetime.datetime.now().strftime('%d%m%Y-%H%M%S')))
+        save_name = os.path.join(self.save_dir, '%s-%s-%s.h5' % (self.dataset_name, self.modality_name, datetime.datetime.now().strftime('%d%m-%H%M')))
         self.autoencoder.save_weights(save_name)
     
     def load_model(self):
         """load (deep) autoencoder model from external files
         """
         weights_list = [f for f in os.listdir(self.save_dir) if os.path.isfile(os.path.join(self.save_dir, f))]
+        print("--" * 20)
         print(weights_list)
         print("Here are the weights of pre-trained models")
         for idx, name in enumerate(weights_list):
@@ -185,17 +105,18 @@ class Autoencoder(object):
             except:
                 print("Wrong input! Please start over")
 
-    def vis_model(self):
+    def vis_model(self, X_test):
         """visualize original/reconstructed data along with encoded representation
         """
-        encoded_repres = self.encoder.predict(self.X_test)      # inference
+        encoded_repres = self.encoder.predict(X_test)           # inference
         decoded_repres = self.decoder.predict(encoded_repres)   # inference
+        w, h = decoded_repres.shape[-2:]
         n = 10 # number to visualize
         plt.figure(figsize=(30, 8))
         
         for i in range(n):
             ax = plt.subplot(3, n, i+1)
-            plt.imshow(self.X_test[i].reshape(self.w, self.h))
+            plt.imshow(X_test[i].reshape(w, h))
             plt.gray()
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
@@ -207,7 +128,7 @@ class Autoencoder(object):
             ax.get_yaxis().set_visible(False)
 
             ax = plt.subplot(3, n, i+1+n*2)
-            plt.imshow(decoded_repres[i].reshape(self.w, self.h))
+            plt.imshow(decoded_repres[i].reshape(w, h))
             plt.gray()
             ax.get_xaxis().set_visible(False)
             ax.get_yaxis().set_visible(False)
@@ -217,5 +138,6 @@ class Autoencoder(object):
     def transform(self, X_input):
         """transform inputs to latent representations
         """
-        y_pred = self.encoder.predict(X_input)
-        return y_pred
+        X_encoded = self.encoder.predict(X_input)
+        np.save(os.path.join(self.config['autoencoder']['encoded'], 'encoded_repres_%s_%s' % (self.dataset_name, self.modality_name)), X_encoded)
+        return X_encoded

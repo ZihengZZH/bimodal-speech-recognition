@@ -17,7 +17,7 @@ bimodal speech recognition:
     ☐ re-implement experiment
         ✔ multimodal fusion @done(19-04-22 23:21)
         ☐ cross-modality learning
-        ☐ shared representation learning
+        ✔ shared representation learning @done(19-05-25 16:58)
     ☐ temporal derivates (optional)
     ☐ visualize the representation using e.g. tSNE
 

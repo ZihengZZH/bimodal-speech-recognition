@@ -281,21 +281,28 @@ def concatenate_data(dataset):
     if dataset == 'cuave':
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
         audio = np.load(os.path.join(processed_dir, 'audio.npy'))
-        frame_1 = np.load(os.path.join(processed_dir, 'frames_pca_1.npy'))
-        frame_2 = np.load(os.path.join(processed_dir, 'frames_pca_2.npy'))
+        frame_1 = np.load(os.path.join(processed_dir, 'frames_1.npy'))
+        frame_2 = np.load(os.path.join(processed_dir, 'frames_2.npy'))
 
         # ensure dimensionality match
-        assert len(audio) == len(frame_1) == len(frame_2)
+        assert len(audio) == len(mfcc) == len(frame_1) == len(frame_2)
 
-        concat_data_1, concat_data_2 = [0]*len(audio), [0]*len(audio)
-        for i in range(len(mfcc)):
-            concat_data_1[i] = np.hstack((frame_1[i].flatten(), audio[i].flatten()))
-            concat_data_2[i] = np.hstack((frame_2[i].flatten(), audio[i].flatten()))
+        concat_data_audio_1, concat_data_audio_2 = [0]*len(audio), [0]*len(audio)
+        concat_data_mfcc_1, concat_data_mfcc_2 = [0]*len(mfcc), [0]*len(mfcc)
+
+        for i in range(len(audio)):
+            concat_data_audio_1[i] = np.hstack((frame_1[i].flatten(), audio[i].flatten()))
+            concat_data_audio_2[i] = np.hstack((frame_2[i].flatten(), audio[i].flatten()))
+            concat_data_mfcc_1[i] = np.hstack((frame_1[i].flatten(), mfcc[i].flatten()))
+            concat_data_mfcc_2[i] = np.hstack((frame_2[i].flatten(), mfcc[i].flatten()))
         
-        print(np.array(concat_data_1).shape, np.array(concat_data_2).shape)
+        print(np.array(concat_data_audio_1).shape, np.array(concat_data_audio_2).shape)
+        print(np.array(concat_data_mfcc_1).shape, np.array(concat_data_mfcc_2).shape)
         
-        np.save(os.path.join(processed_dir, 'concat_data_audio_1'), concat_data_1)
-        np.save(os.path.join(processed_dir, 'concat_data_audio_2'), concat_data_2)
+        np.save(os.path.join(processed_dir, 'concat_data_audio_1'), concat_data_audio_1)
+        np.save(os.path.join(processed_dir, 'concat_data_audio_2'), concat_data_audio_2)
+        np.save(os.path.join(processed_dir, 'concat_data_mfcc_1'), concat_data_mfcc_1)
+        np.save(os.path.join(processed_dir, 'concat_data_mfcc_2'), concat_data_mfcc_2)
     
     elif dataset == 'avletter':
         mfcc = np.load(os.path.join(processed_dir, 'mfccs.npy'))
@@ -313,17 +320,29 @@ def concatenate_data(dataset):
         np.save(os.path.join(processed_dir, 'concat_data'), concat_data)
 
 
-def load_concatenate_data(dataset):
+def load_concatenate_data(dataset, verbose=False):
     # para dataset: name of dataset to be used
     processed_dir = data_config['data']['processed'][dataset]
+
     if dataset == 'cuave':
         concat_data_1 = np.load(os.path.join(processed_dir, 'concat_data_1.npy'))
         concat_data_2 = np.load(os.path.join(processed_dir, 'concat_data_2.npy'))
+
+        if verbose:
+            print("--" * 20)
+            print("CUAVE concat data 1 shape ", concat_data_1.shape)
+            print("CUAVE concat data 2 shape ", concat_data_2.shape)
+            print("--" * 20)
 
         return np.vstack((concat_data_1, concat_data_2))
 
     elif dataset == 'avletter':
         concat_data = np.load(os.path.join(processed_dir, 'concat_data.npy'))
+
+        if verbose:
+            print("--" * 20)
+            print("AVLetters concat data shape ", concat_data.shape)
+            print("--" * 20)
 
         return concat_data
 
@@ -335,3 +354,117 @@ def contiguous(data):
         return np.reshape(data, (data.shape[0], int(data.shape[1]*data.shape[2]*data.shape[3])))
     else:
         return data
+
+
+def flatten_data(X, image=True):
+        """flatten images to 1D array
+        # para X: entire training/test set (#num x dim(75*50))
+        # para image: whether image or not
+        return X: flattened training/test set
+        """
+        if image:
+            X = X.astype('float32') / 255.
+        else:
+            w, h = X[0].shape
+            X = np.array([x.reshape(w*h, 1) for x in X])
+        X = X.reshape((len(X), np.prod(X.shape[1:])))
+        return X
+
+
+def load_data(dataset, modality_A, modality_V, verbose=False):
+    # para dataset: which dataset to use
+    load_dir = data_config['data']['processed'][dataset]
+
+    if dataset == 'cuave':
+
+        if modality_V == 'concat':
+
+            if modality_A == 'audio':
+                concat_data_audio_1 = np.load(os.path.join(load_dir, 'concat_data_audio_1.npy'))
+                concat_data_audio_2 = np.load(os.path.join(load_dir, 'concat_data_audio_2.npy'))
+                labels = np.load(os.path.join(load_dir, 'labels.npy'))
+                if verbose:
+                    print("--" * 20)
+                    print("CUAVE dataset")
+                    print("--" * 20)
+                    print("concat data AUDIO 1 shape", concat_data_audio_1.shape)
+                    print("concat data AUDIO 2 shape", concat_data_audio_2.shape)
+                    print("labels shape", labels.shape)
+                    print("--" * 20)
+                return concat_data_audio_1, concat_data_audio_2, labels
+            
+            elif modality_A == 'mfcc':
+                concat_data_mfcc_1 = np.load(os.path.join(load_dir, 'concat_data_mfcc_1.npy'))
+                concat_data_mfcc_2 = np.load(os.path.join(load_dir, 'concat_data_mfcc_2.npy'))
+                labels = np.load(os.path.join(load_dir, 'labels.npy'))
+                if verbose:
+                    print("--" * 20)
+                    print("CUAVE dataset")
+                    print("--" * 20)
+                    print("concat data MFCC 1 shape", concat_data_mfcc_1.shape)
+                    print("concat data MFCC 2 shape", concat_data_mfcc_2.shape)
+                    print("labels shape", labels.shape)
+                    print("--" * 20)
+                return concat_data_mfcc_1, concat_data_mfcc_2, labels
+        
+        elif modality_V == 'frame':
+
+            if modality_A == 'audio':
+                audio = np.load(os.path.join(load_dir, 'audio.npy'))
+                frames_1 = np.load(os.path.join(load_dir, 'frames_1.npy'))
+                frames_2 = np.load(os.path.join(load_dir, 'frames_2.npy'))
+                labels = np.load(os.path.join(load_dir, 'labels.npy'))
+                if verbose:
+                    print("--" * 20)
+                    print("CUAVE dataset")
+                    print("--" * 20)
+                    print("frames data 1 shape", frames_1.shape)
+                    print("frames data 2 shape", frames_2.shape)
+                    print("audio data shape", audio.shape)
+                    print("labels shape", labels.shape)
+                    print("--" * 20)
+                return audio, frames_1, frames_2, labels
+            
+            elif modality_A == 'mfcc':
+                mfccs = np.load(os.path.join(load_dir, 'mfccs.npy'))
+                frames_1 = np.load(os.path.join(load_dir, 'frames_1.npy'))
+                frames_2 = np.load(os.path.join(load_dir, 'frames_2.npy'))
+                labels = np.load(os.path.join(load_dir, 'labels.npy'))
+                if verbose:
+                    print("--" * 20)
+                    print("CUAVE dataset")
+                    print("--" * 20)
+                    print("frames data 1 shape", frames_1.shape)
+                    print("frames data 2 shape", frames_2.shape)
+                    print("mfccs data shape", mfccs.shape)
+                    print("labels shape", labels.shape)
+                    print("--" * 20)
+                return mfccs, frames_1, frames_2, labels
+    
+    elif dataset == 'avletter':
+        
+        if modality_A == 'concat' or modality_V == 'concat':
+            concat_data = np.load(os.path.join(load_dir, 'concat_data.npy'))
+            labels = np.load(os.path.join(load_dir, 'labels.npy'))
+            if verbose:
+                print("--" * 20)
+                print("AVLetter dataset")
+                print("--" * 20)
+                print("concat data shape", concat_data.shape)
+                print("labels shape", labels.shape)
+                print("--" * 20)
+            return concat_data, labels
+        
+        elif modality_A == 'mfcc' and modality_V == 'frame':
+            frames = np.load(os.path.join(load_dir, 'frames.npy'))
+            mfccs = np.load(os.path.join(load_dir, 'mfccs.npy'))
+            labels = np.load(os.path.join(load_dir, 'labels.npy'))
+            if verbose:
+                print("--" * 20)
+                print("AVLetter dataset")
+                print("--" * 20)
+                print("frames data shape", frames.shape)
+                print("mfccs data shape", mfccs.shape)
+                print("labels shape", labels.shape)
+                print("--" * 20)
+            return mfccs, frames, labels

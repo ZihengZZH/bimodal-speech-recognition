@@ -67,9 +67,18 @@ dataset
 |   |__ g[01:22]_aligned.mat
 |__ processed
 |   |__ avletters
+|   |   |__ concat_data.npy
+|   |   |__ frames.npy
+|   |   |__ labels.npy
+|   |   |__ mfccs.npy
 |   |__ cuave
+|   |   |__ audio.npy
+|   |   |__ concat_data_1.npy
+|   |   |__ concat_data_2.npy
 |   |   |__ frames_1.npy
 |   |   |__ frame_2.npy
+|   |   |__ frames_pca_1.npy
+|   |   |__ frames_pca_1.npy
 |   |   |__ labels.csv
 |   |   |__ mfccs.csv
 |__ dataset2.mat
