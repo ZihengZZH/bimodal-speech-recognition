@@ -26,7 +26,7 @@
     "autoencoder": {
         "hidden_ratio": 0.3,
         "batch_size": 32,
-        "epochs": 20,
+        "epochs": 40,
         "save_dir": "./models/AE_models",
         "save_dir_bimodal": "./models/AE_bimodal_models",
         "encoded": "./dataset/encoded"

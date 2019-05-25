@@ -37,7 +37,32 @@ def baseline(dataset):
 
 
 def bimodal_fusion(dataset):
-    pass
+    # concat_data_audio_1, concat_data_audio_2, labels = load_data(dataset, 'audio', 'concat', verbose=True)
+    concat_data_mfcc_1, concat_data_mfcc_2, labels = load_data(dataset, 'mfcc', 'concat', verbose=True)
+
+    # X = np.vstack((concat_data_audio_1, concat_data_audio_2))
+    X = np.vstack((concat_data_mfcc_1, concat_data_mfcc_2))
+    y = np.hstack((labels[:,0], labels[:,0]))
+
+    print("--" * 20)
+    print("processed data shape", X.shape)
+    print("processed label shape", y.shape)
+    print("--" * 20)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+
+    assert X_train.shape[1] == X_test.shape[1]
+
+    test_AE = Autoencoder(dataset, 'concat_audio', X_train.shape[1])
+    test_AE.build_model()
+    test_AE.train_model(X_train)
+    
+    X_encoded_train = test_AE.transform(X_train)
+    X_encoded_test = test_AE.transform(X_test)
+
+    test_SVM = LinearSVM('%s_baseline_%s' % (dataset, 'concat_audio'))
+    test_SVM.train(X_encoded_train, y_train)
+    test_SVM.test(X_encoded_test, y_test)
 
 
 def cross_modality(dataset):
@@ -84,7 +109,7 @@ def shared_repres():
 
 
 def main():
-    cross_modality('cuave')
+    bimodal_fusion('cuave')
 
 if __name__ == "__main__":
     main()

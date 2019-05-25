@@ -31,8 +31,9 @@ From the similar example, [decoupled bimodal learning](https://github.com/Jakobo
 
 In the CUAVE dataset, video frames are 75x50 pixels and raw audio waveforms are 534 in length.
 
-| DATA                      | SHAPE         |
-| concat data 1 / 2 (A + V) | 4942, 180
+| DATA                              | SHAPE         |
+| concat data 1 / 2 (A + V)         | 4942, 17136   |
+| concat data 1 / 2 (MFCC + V)      | 4942, 15052   |
 
 ## learning architecture
 
